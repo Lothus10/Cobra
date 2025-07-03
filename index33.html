@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jogo da Cobra</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #111;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      user-select: none;
+    }
+    canvas {
+      background-color: #222;
+      border: 2px solid #0f0;
+      display: block;
+    }
+    #score {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Pontuação: 0</div>
+  <canvas id="game" width="400" height="400"></canvas>
+  
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const grid = 20; // tamanho de cada quadrado
+    const canvasSize = 400;
+    let count = 0;
+    let score = 0;
+
+    let snake = [
+      { x: 160, y: 200 },
+      { x: 140, y: 200 },
+      { x: 120, y: 200 },
+    ];
+    let dx = grid;
+    let dy = 0;
+
+    let apple = {
+      x: Math.floor(Math.random() * (canvasSize / grid)) * grid,
+      y: Math.floor(Math.random() * (canvasSize / grid)) * grid
+    };
+
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+      if (++count < 6) {
+        return;
+      }
+      count = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Mover a cobra
+      let head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+      // Colisão com paredes (volta do outro lado)
+      if (head.x >= canvas.width) head.x = 0;
+      else if (head.x < 0) head.x = canvas.width - grid;
+      if (head.y >= canvas.height) head.y = 0;
+      else if (head.y < 0) head.y = canvas.height - grid;
+
+      // Colisão com o próprio corpo
+      for (let part of snake) {
+        if (head.x === part.x && head.y === part.y) {
+          resetGame();
+          return;
+        }
+      }
+
+      snake.unshift(head);
+
+      // Comer maçã
+      if (head.x === apple.x && head.y === apple.y) {
+        score++;
+        document.getElementById('score').textContent = 'Pontuação: ' + score;
+        placeApple();
+      } else {
+        snake.pop();
+      }
+
+      // Desenhar maçã
+      ctx.fillStyle = 'red';
+      ctx.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+
+      // Desenhar cobra
+      ctx.fillStyle = 'lime';
+      for (let part of snake) {
+        ctx.fillRect(part.x, part.y, grid - 1, grid - 1);
+      }
+    }
+
+    function placeApple() {
+      apple.x = Math.floor(Math.random() * (canvasSize / grid)) * grid;
+      apple.y = Math.floor(Math.random() * (canvasSize / grid)) * grid;
+      // Evitar que a maçã apareça em cima da cobra
+      for (let part of snake) {
+        if (part.x === apple.x && part.y === apple.y) {
+          placeApple();
+          break;
+        }
+      }
+    }
+
+    function resetGame() {
+      alert('Game Over! Sua pontuação: ' + score);
+      score = 0;
+      document.getElementById('score').textContent = 'Pontuação: 0';
+      snake = [
+        { x: 160, y: 200 },
+        { x: 140, y: 200 },
+        { x: 120, y: 200 },
+      ];
+      dx = grid;
+      dy = 0;
+      placeApple();
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' && dx === 0) {
+        dx = -grid;
+        dy = 0;
+      } else if (e.key === 'ArrowUp' && dy === 0) {
+        dx = 0;
+        dy = -grid;
+      } else if (e.key === 'ArrowRight' && dx === 0) {
+        dx = grid;
+        dy = 0;
+      } else if (e.key === 'ArrowDown' && dy === 0) {
+        dx = 0;
+        dy = grid;
+      }
+    });
+
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
